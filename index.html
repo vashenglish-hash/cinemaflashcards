@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Кино-флеш-карточки</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --bg-2:#131c31;
+      --panel:rgba(12,18,32,.72);
+      --panel-2:rgba(20,28,48,.82);
+      --card:#1a2540;
+      --card-2:#223055;
+      --text:#f3f6ff;
+      --muted:#a7b2c9;
+      --accent:#e11d48;
+      --accent-2:#7c3aed;
+      --gold:#f59e0b;
+      --success:#22c55e;
+      --warning:#f97316;
+      --shadow:0 20px 50px rgba(0,0,0,.38);
+      --radius:24px;
+      --card-width:clamp(240px, 32vw, 410px);
+    }
+
+    *{box-sizing:border-box}
+
+    html, body{
+      margin:0;
+      min-height:100%;
+    }
+
+    body{
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(225,29,72,.18), transparent 25%),
+        radial-gradient(circle at 80% 10%, rgba(124,58,237,.18), transparent 25%),
+        radial-gradient(circle at 50% 80%, rgba(245,158,11,.10), transparent 30%),
+        linear-gradient(135deg, rgba(7,10,20,.95), rgba(15,23,42,.96)),
+        url("images/cinema-bg.jpg") center center / cover no-repeat fixed;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,.03) 0 8px,
+          transparent 8px 34px
+        );
+      opacity:.08;
+      mix-blend-mode:screen;
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,.08), transparent 40%);
+      opacity:.7;
+    }
+
+    .app{
+      max-width:1240px;
+      margin:0 auto;
+      padding:16px;
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(24px,3.4vw,42px);
+      line-height:1.08;
+      letter-spacing:.3px;
+    }
+
+    .subtitle{
+      color:var(--muted);
+      margin-top:6px;
+      font-size:14px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    button, select{
+      border:none;
+      outline:none;
+      border-radius:16px;
+      padding:11px 15px;
+      font-size:14px;
+      cursor:pointer;
+      transition:.25s ease;
+      min-height:44px;
+    }
+
+    select{
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.08);
+      width:100%;
+    }
+
+    button{
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    button:hover, select:hover{
+      transform:translateY(-2px);
+      filter:brightness(1.08);
+    }
+
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
+      filter:none;
+    }
+
+    .primary{
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#fff;
+    }
+
+    .success{
+      background:linear-gradient(135deg,#16a34a,var(--success));
+      color:#fff;
+    }
+
+    .warning{
+      background:linear-gradient(135deg,#fb923c,var(--warning));
+      color:#fff;
+    }
+
+    .gold{
+      background:linear-gradient(135deg,#fbbf24,var(--gold));
+      color:#1f2937;
+      font-weight:700;
+    }
+
+    .panel{
+      background:var(--panel);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:var(--shadow);
+      margin-bottom:18px;
+    }
+
+    .setup{
+      display:grid;
+      grid-template-columns:minmax(240px, 1fr) auto auto auto;
+      gap:10px;
+      align-items:end;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+    }
+
+    .field label{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(140px, 1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .badge{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:999px;
+      padding:10px 14px;
+      box-shadow:var(--shadow);
+      color:var(--muted);
+      font-size:13px;
+      text-align:center;
+    }
+
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+
+    .tab-btn.active{
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#fff;
+    }
+
+    .card-stage{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:min(58vh, 620px);
+      padding:10px 0;
+      perspective:1200px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .flashcard{
+      width:var(--card-width);
+      aspect-ratio:4 / 5;
+      position:relative;
+      transform-style:preserve-3d;
+      transition:transform .7s ease, opacity .45s ease;
+      cursor:pointer;
+      max-height:min(52vh, 560px);
+    }
+
+    .flashcard.flipped{
+      transform:rotateY(180deg);
+    }
+
+    .flashcard.move-out{
+      animation:moveOut .45s ease forwards;
+      pointer-events:none;
+    }
+
+    .flashcard.shuffle-anim{
+      animation:shufflePulse .45s ease;
+    }
+
+    .face{
+      position:absolute;
+      inset:0;
+      border-radius:30px;
+      overflow:hidden;
+      backface-visibility:hidden;
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+        linear-gradient(145deg, #18233d, #121a2f);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .front{
+      padding:14px;
+    }
+
+    .back{
+      transform:rotateY(180deg);
+      padding:24px;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      background:
+        radial-gradient(circle at top, rgba(225,29,72,.18), transparent 35%),
+        radial-gradient(circle at bottom, rgba(124,58,237,.15), transparent 35%),
+        linear-gradient(145deg, #1a2340, #12182c);
+    }
+
+    .image-wrap{
+      flex:1;
+      min-height:0;
+      border-radius:22px;
+      overflow:hidden;
+      background:#0f172a;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:14px;
+      border:1px solid rgba(255,255,255,.08);
+      position:relative;
+    }
+
+    .image-wrap::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(to top, rgba(0,0,0,.22), transparent 35%);
+      pointer-events:none;
+    }
+
+    .image-wrap img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .word{
+      font-size:clamp(24px,2.8vw,38px);
+      font-weight:800;
+      text-align:center;
+      margin:4px 0 8px;
+      letter-spacing:.2px;
+      text-shadow:0 2px 16px rgba(0,0,0,.25);
+      line-height:1.1;
+    }
+
+    .hint{
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .back .word{
+      font-size:clamp(28px,3.4vw,44px);
+    }
+
+    .actions{
+      margin-top:12px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .empty{
+      text-align:center;
+      padding:24px 16px;
+      color:var(--muted);
+      font-size:17px;
+      animation:fadeIn .4s ease;
+    }
+
+    .lists{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .subpanel{
+      background:var(--panel-2);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:24px;
+      padding:16px;
+      box-shadow:var(--shadow);
+    }
+
+    .subpanel h2{
+      margin:0 0 14px;
+      font-size:20px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+      gap:12px;
+    }
+
+    .mini-card{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      animation:fadeIn .35s ease;
+    }
+
+    .mini-card img{
+      width:100%;
+      aspect-ratio:4 / 5;
+      object-fit:cover;
+      border-radius:14px;
+      background:#0f172a;
+    }
+
+    .mini-title{
+      font-size:17px;
+      font-weight:700;
+      color:var(--text);
+    }
+
+    .mini-sub{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .mini-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:auto;
+    }
+
+    .small-btn{
+      padding:8px 11px;
+      font-size:12px;
+      border-radius:12px;
+      min-height:auto;
+    }
+
+    @keyframes fadeIn{
+      from{opacity:0; transform:translateY(8px)}
+      to{opacity:1; transform:translateY(0)}
+    }
+
+    @keyframes shufflePulse{
+      0%{transform:translateX(0) rotate(0)}
+      25%{transform:translateX(-12px) rotate(-3deg)}
+      50%{transform:translateX(12px) rotate(3deg)}
+      100%{transform:translateX(0) rotate(0)}
+    }
+
+    @keyframes moveOut{
+      from{opacity:1; transform:translateY(0) scale(1)}
+      to{opacity:0; transform:translateY(-26px) scale(.94)}
+    }
+
+    @media (max-width: 1100px){
+      .stats{
+        grid-template-columns:repeat(2, minmax(150px, 1fr));
+      }
+    }
+
+    @media (max-width: 980px){
+      .setup{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .lists{
+        grid-template-columns:1fr;
+      }
+
+      .card-stage{
+        min-height:min(52vh, 560px);
+      }
+    }
+
+    @media (max-width: 720px){
+      .app{
+        padding:12px;
+      }
+
+      .setup{
+        grid-template-columns:1fr;
+      }
+
+      .stats{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .card-stage{
+        min-height:min(48vh, 500px);
+      }
+
+      .flashcard{
+        width:min(100%, 320px);
+        max-height:min(46vh, 480px);
+      }
+
+      .panel, .subpanel{
+        padding:14px;
+      }
+    }
+
+    @media (max-width: 520px){
+      .stats{
+        grid-template-columns:1fr;
+      }
+
+      .tabs{
+        display:grid;
+        grid-template-columns:1fr;
+      }
+
+      .actions{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+      }
+
+      .flashcard{
+        width:min(100%, 280px);
+      }
+
+      .word{
+        font-size:22px;
+      }
+
+      .back .word{
+        font-size:28px;
+      }
+    }
+
+    @media (max-height: 900px){
+      .card-stage{
+        min-height:48vh;
+      }
+
+      .flashcard{
+        width:clamp(230px, 28vw, 360px);
+      }
+    }
+
+    @media (max-height: 760px){
+      .app{
+        padding-top:10px;
+        padding-bottom:10px;
+      }
+
+      .topbar{
+        margin-bottom:12px;
+      }
+
+      .panel{
+        margin-bottom:14px;
+      }
+
+      .card-stage{
+        min-height:42vh;
+      }
+
+      .flashcard{
+        width:clamp(210px, 24vw, 320px);
+      }
+
+      .front{
+        padding:12px;
+      }
+
+      .back{
+        padding:18px;
+      }
+
+      .image-wrap{
+        margin-bottom:10px;
+      }
+
+      .word{
+        font-size:clamp(20px,2.4vw,30px);
+        margin-bottom:6px;
+      }
+
+      .back .word{
+        font-size:clamp(24px,2.8vw,34px);
+      }
+
+      .hint{
+        font-size:12px;
+      }
+
+      button, select{
+        padding:10px 12px;
+        min-height:40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div>
+        <h1 id="title">Кино-флеш-карточки</h1>
+        <div class="subtitle" id="subtitle">Переворачивайте карточки, отмечайте выученные слова и отправляйте трудные слова на доучивание</div>
+      </div>
+      <div class="controls">
+        <button id="toggleUiLang" class="primary">UI: Русский</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="setup">
+        <div class="field">
+          <label id="modeLabel" for="modeSelect">Режим показа</label>
+          <select id="modeSelect">
+            <option value="ru-en">Русский → English</option>
+            <option value="en-ru">English → Русский</option>
+          </select>
+        </div>
+        <button id="startBtn" class="primary">Начать заново</button>
+        <button id="shuffleBtn">Перемешать</button>
+        <button id="resetProgressBtn" class="warning">Сбросить прогресс</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="tabs">
+        <button id="activeTabBtn" class="tab-btn active">Активные карточки</button>
+        <button id="learnedTabBtn" class="tab-btn">Выученные карточки</button>
+        <button id="reviewTabBtn" class="tab-btn">На доучивание</button>
+      </div>
+
+      <div class="stats">
+        <div class="badge" id="progressText">Осталось карточек: 0</div>
+        <div class="badge" id="learnedText">Выучено: 0</div>
+        <div class="badge" id="reviewText">На доучивание: 0</div>
+        <div class="badge" id="viewModeText">Раздел: активные</div>
+      </div>
+
+      <div class="card-stage">
+        <div class="empty" id="emptyState" style="display:none;">Здесь пока нет карточек</div>
+
+        <div class="flashcard" id="flashcard">
+          <div class="face front">
+            <div class="image-wrap">
+              <img id="cardImage" src="" alt="Изображение карточки" />
+            </div>
+            <div class="word" id="frontWord">...</div>
+            <div class="hint" id="flipHint">Нажмите, чтобы перевернуть</div>
+          </div>
+
+          <div class="face back">
+            <div class="word" id="backWord">...</div>
+            <div class="hint" id="backHint">Перевод</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="flipBtn">Перевернуть</button>
+        <button id="nextBtn">Следующая</button>
+        <button id="reviewBtn" class="gold">Доучить</button>
+        <button id="learnedBtn" class="success">Отметить как выученное</button>
+      </div>
+    </div>
+
+    <div class="lists">
+      <div class="subpanel">
+        <h2 id="learnedListTitle">Список выученных карточек</h2>
+        <div id="learnedGrid" class="grid"></div>
+        <div id="learnedListEmpty" class="empty" style="display:none;">Пока нет выученных карточек</div>
+      </div>
+
+      <div class="subpanel">
+        <h2 id="reviewListTitle">Список карточек на доучивание</h2>
+        <div id="reviewGrid" class="grid"></div>
+        <div id="reviewListEmpty" class="empty" style="display:none;">Пока нет карточек на доучивание</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "flashcards_app_state_v3";
+
+    const cardsData = [
+      { id: "audience", ru: "Аудитория", en: "Audience", image: "images/audience.png" },
+      { id: "channels", ru: "Каналы", en: "Channels", image: "images/channels.png" },
+      { id: "character", ru: "Персонаж", en: "Character", image: "images/character.png" },
+      { id: "hit", ru: "Хит", en: "Hit", image: "images/hit.png" },
+      { id: "scene", ru: "Сцена", en: "Scene", image: "images/scene.jpg" },
+      { id: "series", ru: "Сериал", en: "Series", image: "images/series.jpg" },
+      { id: "special-effects", ru: "Спецэффекты", en: "Special effects", image: "images/special-effects.png" },
+      { id: "tv-shows", ru: "Телешоу", en: "TV shows", image: "images/tv-shows.png" },
+      { id: "viewer", ru: "Зритель", en: "Viewer", image: "images/viewer.jpg" }
+    ];
+
+    const i18n = {
+      ru: {
+        title: "Кино-флеш-карточки",
+        subtitle: "Переворачивайте карточки, отмечайте выученные слова и отправляйте трудные слова на доучивание",
+        uiButton: "UI: Русский",
+        modeLabel: "Режим показа",
+        modeRuEn: "Русский → English",
+        modeEnRu: "English → Русский",
+        start: "Начать заново",
+        shuffle: "Перемешать",
+        resetProgress: "Сбросить прогресс",
+        flip: "Перевернуть",
+        next: "Следующая",
+        learned: "Отметить как выученное",
+        review: "Доучить",
+        activeTab: "Активные карточки",
+        learnedTab: "Выученные карточки",
+        reviewTab: "На доучивание",
+        progress: (n) => `Осталось карточек: ${n}`,
+        learnedCount: (n) => `Выучено: ${n}`,
+        reviewCount: (n) => `На доучивание: ${n}`,
+        viewMode: (v) => `Раздел: ${v}`,
+        activeView: "активные",
+        learnedView: "выученные",
+        reviewView: "доучивание",
+        flipHint: "Нажмите, чтобы перевернуть",
+        backHint: "Перевод",
+        emptyActive: "Активных карточек больше нет 🎬",
+        emptyLearned: "Пока нет выученных карточек",
+        emptyReview: "Пока нет карточек на доучивание",
+        imageAlt: "Изображение карточки",
+        learnedListTitle: "Список выученных карточек",
+        reviewListTitle: "Список карточек на доучивание",
+        returnToActive: "Вернуть в активные",
+        moveToLearned: "Переместить в выученные",
+        confirmReset: "Сбросить весь сохранённый прогресс?"
+      },
+      en: {
+        title: "Cinema Flashcards",
+        subtitle: "Flip cards, mark learned words, and send difficult ones for extra review",
+        uiButton: "UI: English",
+        modeLabel: "Display mode",
+        modeRuEn: "Russian → English",
+        modeEnRu: "English → Russian",
+        start: "Restart",
+        shuffle: "Shuffle",
+        resetProgress: "Reset progress",
+        flip: "Flip",
+        next: "Next",
+        learned: "Mark as learned",
+        review: "Review later",
+        activeTab: "Active cards",
+        learnedTab: "Learned cards",
+        reviewTab: "Review queue",
+        progress: (n) => `Cards left: ${n}`,
+        learnedCount: (n) => `Learned: ${n}`,
+        reviewCount: (n) => `To review: ${n}`,
+        viewMode: (v) => `Section: ${v}`,
+        activeView: "active",
+        learnedView: "learned",
+        reviewView: "review",
+        flipHint: "Click to flip",
+        backHint: "Translation",
+        emptyActive: "No active cards left 🎬",
+        emptyLearned: "No learned cards yet",
+        emptyReview: "No review cards yet",
+        imageAlt: "Card image",
+        learnedListTitle: "Learned cards list",
+        reviewListTitle: "Cards for extra review",
+        returnToActive: "Return to active",
+        moveToLearned: "Move to learned",
+        confirmReset: "Reset all saved progress?"
+      }
+    };
+
+    let uiLang = "ru";
+    let mode = "ru-en";
+    let activeCards = [];
+    let learnedCards = [];
+    let reviewCards = [];
+    let currentIndex = 0;
+    let currentView = "active";
+
+    const titleEl = document.getElementById("title");
+    const subtitleEl = document.getElementById("subtitle");
+    const toggleUiLangBtn = document.getElementById("toggleUiLang");
+    const modeLabelEl = document.getElementById("modeLabel");
+    const modeSelect = document.getElementById("modeSelect");
+    const startBtn = document.getElementById("startBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const resetProgressBtn = document.getElementById("resetProgressBtn");
+
+    const activeTabBtn = document.getElementById("activeTabBtn");
+    const learnedTabBtn = document.getElementById("learnedTabBtn");
+    const reviewTabBtn = document.getElementById("reviewTabBtn");
+
+    const progressText = document.getElementById("progressText");
+    const learnedText = document.getElementById("learnedText");
+    const reviewText = document.getElementById("reviewText");
+    const viewModeText = document.getElementById("viewModeText");
+
+    const flashcard = document.getElementById("flashcard");
+    const cardImage = document.getElementById("cardImage");
+    const frontWord = document.getElementById("frontWord");
+    const backWord = document.getElementById("backWord");
+    const flipHint = document.getElementById("flipHint");
+    const backHint = document.getElementById("backHint");
+    const emptyState = document.getElementById("emptyState");
+
+    const flipBtn = document.getElementById("flipBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const learnedBtn = document.getElementById("learnedBtn");
+    const reviewBtn = document.getElementById("reviewBtn");
+
+    const learnedListTitle = document.getElementById("learnedListTitle");
+    const reviewListTitle = document.getElementById("reviewListTitle");
+    const learnedGrid = document.getElementById("learnedGrid");
+    const reviewGrid = document.getElementById("reviewGrid");
+    const learnedListEmpty = document.getElementById("learnedListEmpty");
+    const reviewListEmpty = document.getElementById("reviewListEmpty");
+
+    function shuffleArray(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function saveState(){
+      const state = {
+        uiLang,
+        mode,
+        activeCards,
+        learnedCards,
+        reviewCards,
+        currentIndex,
+        currentView
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+
+      if(!raw){
+        activeCards = shuffleArray(cardsData.map(card => ({ ...card })));
+        learnedCards = [];
+        reviewCards = [];
+        currentIndex = 0;
+        currentView = "active";
+        return;
+      }
+
+      try{
+        const state = JSON.parse(raw);
+        uiLang = state.uiLang || "ru";
+        mode = state.mode || "ru-en";
+        activeCards = Array.isArray(state.activeCards) ? state.activeCards : shuffleArray(cardsData.map(card => ({ ...card })));
+        learnedCards = Array.isArray(state.learnedCards) ? state.learnedCards : [];
+        reviewCards = Array.isArray(state.reviewCards) ? state.reviewCards : [];
+        currentIndex = Number.isInteger(state.currentIndex) ? state.currentIndex : 0;
+        currentView = state.currentView || "active";
+
+        if(activeCards.length === 0 && learnedCards.length === 0 && reviewCards.length === 0){
+          activeCards = shuffleArray(cardsData.map(card => ({ ...card })));
+        }
+
+        if(currentIndex >= getCurrentDeck().length){
+          currentIndex = 0;
+        }
+      }catch(e){
+        activeCards = shuffleArray(cardsData.map(card => ({ ...card })));
+        learnedCards = [];
+        reviewCards = [];
+        currentIndex = 0;
+        currentView = "active";
+      }
+    }
+
+    function getCurrentDeck(){
+      if(currentView === "learned") return learnedCards;
+      if(currentView === "review") return reviewCards;
+      return activeCards;
+    }
+
+    function getCurrentCard(){
+      const deck = getCurrentDeck();
+      return deck[currentIndex] || null;
+    }
+
+    function updateUIText(){
+      const t = i18n[uiLang];
+      titleEl.textContent = t.title;
+      subtitleEl.textContent = t.subtitle;
+      toggleUiLangBtn.textContent = t.uiButton;
+      modeLabelEl.textContent = t.modeLabel;
+      modeSelect.options[0].textContent = t.modeRuEn;
+      modeSelect.options[1].textContent = t.modeEnRu;
+      modeSelect.value = mode;
+
+      startBtn.textContent = t.start;
+      shuffleBtn.textContent = t.shuffle;
+      resetProgressBtn.textContent = t.resetProgress;
+
+      activeTabBtn.textContent = t.activeTab;
+      learnedTabBtn.textContent = t.learnedTab;
+      reviewTabBtn.textContent = t.reviewTab;
+
+      flipBtn.textContent = t.flip;
+      nextBtn.textContent = t.next;
+      learnedBtn.textContent = t.learned;
+      reviewBtn.textContent = t.review;
+
+      flipHint.textContent = t.flipHint;
+      backHint.textContent = t.backHint;
+      cardImage.alt = t.imageAlt;
+
+      learnedListTitle.textContent = t.learnedListTitle;
+      reviewListTitle.textContent = t.reviewListTitle;
+
+      document.documentElement.lang = uiLang;
+
+      updateStats();
+      renderLearnedList();
+      renderReviewList();
+      renderCard();
+    }
+
+    function updateStats(){
+      const t = i18n[uiLang];
+      progressText.textContent = t.progress(activeCards.length);
+      learnedText.textContent = t.learnedCount(learnedCards.length);
+      reviewText.textContent = t.reviewCount(reviewCards.length);
+
+      let viewLabel = t.activeView;
+      if(currentView === "learned") viewLabel = t.learnedView;
+      if(currentView === "review") viewLabel = t.reviewView;
+
+      viewModeText.textContent = t.viewMode(viewLabel);
+
+      activeTabBtn.classList.toggle("active", currentView === "active");
+      learnedTabBtn.classList.toggle("active", currentView === "learned");
+      reviewTabBtn.classList.toggle("active", currentView === "review");
+    }
+
+    function renderCard(){
+      const t = i18n[uiLang];
+      const card = getCurrentCard();
+
+      flashcard.classList.remove("flipped");
+      flashcard.classList.remove("move-out");
+
+      if(!card){
+        flashcard.style.display = "none";
+        emptyState.style.display = "block";
+
+        if(currentView === "active"){
+          emptyState.textContent = t.emptyActive;
+        } else if(currentView === "learned"){
+          emptyState.textContent = t.emptyLearned;
+        } else {
+          emptyState.textContent = t.emptyReview;
+        }
+
+        learnedBtn.disabled = true;
+        reviewBtn.disabled = true;
+        flipBtn.disabled = true;
+        nextBtn.disabled = true;
+        updateStats();
+        return;
+      }
+
+      flashcard.style.display = "block";
+      emptyState.style.display = "none";
+
+      const frontText = mode === "ru-en" ? card.ru : card.en;
+      const backTextValue = mode === "ru-en" ? card.en : card.ru;
+
+      frontWord.textContent = frontText;
+      backWord.textContent = backTextValue;
+      cardImage.src = card.image;
+      cardImage.alt = `${t.imageAlt}: ${frontText}`;
+
+      learnedBtn.disabled = currentView !== "active" && currentView !== "review";
+      reviewBtn.disabled = currentView !== "active";
+      flipBtn.disabled = false;
+      nextBtn.disabled = false;
+
+      updateStats();
+      saveState();
+    }
+
+    function renderLearnedList(){
+      const t = i18n[uiLang];
+      learnedGrid.innerHTML = "";
+
+      if(learnedCards.length === 0){
+        learnedListEmpty.style.display = "block";
+        learnedListEmpty.textContent = t.emptyLearned;
+        return;
+      }
+
+      learnedListEmpty.style.display = "none";
+
+      learnedCards.forEach(card => {
+        const item = document.createElement("div");
+        item.className = "mini-card";
+        item.innerHTML = `
+          <img src="${card.image}" alt="${t.imageAlt}">
+          <div class="mini-title">${card.en}</div>
+          <div class="mini-sub">${card.ru}</div>
+          <div class="mini-actions">
+            <button class="small-btn success return-btn" data-id="${card.id}">${t.returnToActive}</button>
+          </div>
+        `;
+        learnedGrid.appendChild(item);
+      });
+
+      document.querySelectorAll(".return-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          returnCardToActive(btn.dataset.id, "learned");
+        });
+      });
+    }
+
+    function renderReviewList(){
+      const t = i18n[uiLang];
+      reviewGrid.innerHTML = "";
+
+      if(reviewCards.length === 0){
+        reviewListEmpty.style.display = "block";
+        reviewListEmpty.textContent = t.emptyReview;
+        return;
+      }
+
+      reviewListEmpty.style.display = "none";
+
+      reviewCards.forEach(card => {
+        const item = document.createElement("div");
+        item.className = "mini-card";
+        item.innerHTML = `
+          <img src="${card.image}" alt="${t.imageAlt}">
+          <div class="mini-title">${card.en}</div>
+          <div class="mini-sub">${card.ru}</div>
+          <div class="mini-actions">
+            <button class="small-btn" data-return-id="${card.id}">${t.returnToActive}</button>
+            <button class="small-btn success" data-learned-id="${card.id}">${t.moveToLearned}</button>
+          </div>
+        `;
+        reviewGrid.appendChild(item);
+      });
+
+      document.querySelectorAll("[data-return-id]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          returnCardToActive(btn.dataset.returnId, "review");
+        });
+      });
+
+      document.querySelectorAll("[data-learned-id]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          moveReviewToLearned(btn.dataset.learnedId);
+        });
+      });
+    }
+
+    function startGame(){
+      activeCards = shuffleArray(cardsData.map(card => ({ ...card })));
+      learnedCards = [];
+      reviewCards = [];
+      currentIndex = 0;
+      currentView = "active";
+      mode = modeSelect.value;
+      renderLearnedList();
+      renderReviewList();
+      renderCard();
+      saveState();
+    }
+
+    function flipCard(){
+      if(!getCurrentCard()) return;
+      flashcard.classList.toggle("flipped");
+    }
+
+    function nextCard(){
+      const deck = getCurrentDeck();
+      if(deck.length === 0) return;
+      flashcard.classList.remove("flipped");
+      currentIndex = (currentIndex + 1) % deck.length;
+      renderCard();
+    }
+
+    function markLearned(){
+      const card = getCurrentCard();
+      if(!card) return;
+      if(currentView !== "active" && currentView !== "review") return;
+
+      flashcard.classList.add("move-out");
+
+      setTimeout(() => {
+        if(currentView === "active"){
+          activeCards = activeCards.filter(item => item.id !== card.id);
+        } else {
+          reviewCards = reviewCards.filter(item => item.id !== card.id);
+        }
+
+        learnedCards.unshift(card);
+
+        if(currentIndex >= getCurrentDeck().length){
+          currentIndex = 0;
+        }
+
+        renderLearnedList();
+        renderReviewList();
+        renderCard();
+        saveState();
+      }, 420);
+    }
+
+    function markForReview(){
+      const card = getCurrentCard();
+      if(!card || currentView !== "active") return;
+
+      flashcard.classList.add("move-out");
+
+      setTimeout(() => {
+        activeCards = activeCards.filter(item => item.id !== card.id);
+        reviewCards.unshift(card);
+
+        if(currentIndex >= activeCards.length){
+          currentIndex = 0;
+        }
+
+        renderReviewList();
+        renderCard();
+        saveState();
+      }, 420);
+    }
+
+    function returnCardToActive(id, from){
+      let card = null;
+
+      if(from === "learned"){
+        card = learnedCards.find(item => item.id === id);
+        learnedCards = learnedCards.filter(item => item.id !== id);
+      }
+
+      if(from === "review"){
+        card = reviewCards.find(item => item.id === id);
+        reviewCards = reviewCards.filter(item => item.id !== id);
+      }
+
+      if(!card) return;
+
+      activeCards.unshift(card);
+
+      if(currentView === from && currentIndex >= getCurrentDeck().length){
+        currentIndex = 0;
+      }
+
+      renderLearnedList();
+      renderReviewList();
+      renderCard();
+      saveState();
+    }
+
+    function moveReviewToLearned(id){
+      const card = reviewCards.find(item => item.id === id);
+      if(!card) return;
+
+      reviewCards = reviewCards.filter(item => item.id !== id);
+      learnedCards.unshift(card);
+
+      if(currentView === "review" && currentIndex >= reviewCards.length){
+        currentIndex = 0;
+      }
+
+      renderLearnedList();
+      renderReviewList();
+      renderCard();
+      saveState();
+    }
+
+    function shuffleDeck(){
+      const deck = getCurrentDeck();
+      if(deck.length === 0) return;
+
+      flashcard.classList.remove("flipped");
+      flashcard.classList.add("shuffle-anim");
+
+      setTimeout(() => {
+        if(currentView === "active") shuffleArray(activeCards);
+        if(currentView === "learned") shuffleArray(learnedCards);
+        if(currentView === "review") shuffleArray(reviewCards);
+
+        currentIndex = 0;
+        flashcard.classList.remove("shuffle-anim");
+        renderCard();
+        saveState();
+      }, 300);
+    }
+
+    function switchView(view){
+      currentView = view;
+      currentIndex = 0;
+      renderCard();
+      saveState();
+    }
+
+    function resetProgress(){
+      const t = i18n[uiLang];
+      if(!confirm(t.confirmReset)) return;
+
+      localStorage.removeItem(STORAGE_KEY);
+      uiLang = "ru";
+      mode = "ru-en";
+      activeCards = shuffleArray(cardsData.map(card => ({ ...card })));
+      learnedCards = [];
+      reviewCards = [];
+      currentIndex = 0;
+      currentView = "active";
+      renderLearnedList();
+      renderReviewList();
+      updateUIText();
+      renderCard();
+      saveState();
+    }
+
+    toggleUiLangBtn.addEventListener("click", () => {
+      uiLang = uiLang === "ru" ? "en" : "ru";
+      updateUIText();
+      saveState();
+    });
+
+    modeSelect.addEventListener("change", () => {
+      mode = modeSelect.value;
+      renderCard();
+      saveState();
+    });
+
+    startBtn.addEventListener("click", startGame);
+    shuffleBtn.addEventListener("click", shuffleDeck);
+    resetProgressBtn.addEventListener("click", resetProgress);
+
+    activeTabBtn.addEventListener("click", () => switchView("active"));
+    learnedTabBtn.addEventListener("click", () => switchView("learned"));
+    reviewTabBtn.addEventListener("click", () => switchView("review"));
+
+    flipBtn.addEventListener("click", flipCard);
+    nextBtn.addEventListener("click", nextCard);
+    learnedBtn.addEventListener("click", markLearned);
+    reviewBtn.addEventListener("click", markForReview);
+    flashcard.addEventListener("click", flipCard);
+
+    loadState();
+    updateUIText();
+    renderLearnedList();
+    renderReviewList();
+    renderCard();
+  </script>
+</body>
+</html>
